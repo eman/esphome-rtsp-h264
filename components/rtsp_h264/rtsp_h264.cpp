@@ -308,9 +308,13 @@ void RtspH264::on_raw_frame(const p4_csi_camera::RawFrame &frame) {
   ef.timestamp_us = frame.timestamp_us;
   ef.keyframe = keyframe;
   if (xQueueSend(this->frame_queue_, &ef, 0) != pdTRUE) {
-    // The server task is behind: the network is slower than the encoder.
+    // The server task is behind: the network is slower than the encoder. A
+    // dropped frame breaks every P-frame that follows until the next
+    // keyframe, so ask for one now rather than leave the viewer with
+    // garbage for up to a GOP.
     heap_caps_free(ef.data);
     this->frames_dropped_++;
+    this->force_idr_ = true;
   }
 }
 
@@ -823,6 +827,7 @@ void RtspH264::broadcast_(const EncodedFrame &frame) {
     if (!ok) {
       ESP_LOGW(TAG, "client could not keep up; dropping it");
       this->drop_client_(client);
+      this->force_idr_ = true;
     }
   }
 }
