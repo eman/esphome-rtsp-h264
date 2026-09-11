@@ -60,16 +60,19 @@ this is the video path.
   converts for its JPEG stills itself.
 - **The encoder runs on the capture task**, so a frame that is being encoded
   holds the sensor's buffer; at 46 ms per 1080p frame that leaves 15 fps
-  comfortable and 20 fps marginal.
+  comfortable and 20 fps marginal. In dim light the camera may drop the
+  sensor to 15 fps itself for a longer exposure.
 - **Internal RAM.** The encoder wants a 135 KB contiguous internal-RAM
   reference frame at 1080p. On a board that also runs a display, Wi-Fi and
   ESPHome's API that is the scarce resource. If the allocation fails the
-  component falls back to PSRAM, which works but doubles the encode time
-  (92 ms per frame, so 10 fps). The fix is to give the encoder the RAM. If
-  you run LVGL: ESPHome puts a draw buffer of a quarter frame or smaller in
-  internal RAM, and raising `buffer_size` to 50 % moves it to PSRAM, 300 KB
-  on a 1024×600 display. The log line `encoder took N KB of internal RAM`
-  says which case you are in.
+  component falls back to PSRAM rather than refuse to start; Espressif places
+  the buffer in internal RAM for speed, and encode time was measured at 46 to
+  92 ms per 1080p frame across runs, though those runs also differed in scene
+  content, so the cost of PSRAM here is not cleanly isolated. The log line
+  `encoder took N KB of internal RAM` says which case you are in. If you run
+  LVGL and want the RAM back: ESPHome puts a draw buffer of a quarter frame or
+  smaller in internal RAM, and raising `buffer_size` to 50 % moves it to
+  PSRAM, 300 KB on a 1024×600 display.
 - **New viewers** get a keyframe within a frame or two: `PLAY` forces an IDR.
   `DESCRIBE` starts the camera and waits up to three seconds for the first
   keyframe so the SDP carries the parameter sets; clients that arrive before
