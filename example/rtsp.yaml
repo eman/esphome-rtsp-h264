@@ -1,0 +1,17 @@
+# The smallest working configuration: a p4_csi_camera for the sensor and
+# pipeline, an rtsp_h264 on top of it. See ../README.md.
+external_components:
+  - source: github://eman/esphome-p4-camera
+  - source: github://eman/esphome-rtsp-h264
+
+p4_csi_camera:
+  id: cam
+  name: Camera
+  i2c_id: bus_a          # the I2C bus the sensor's SCCB shares with the touch controller
+  jpeg_quality: 50
+
+rtsp_h264:
+  camera: cam
+  port: 8554
+  bitrate: 2000000       # bits per second
+  framerate: 15 fps
